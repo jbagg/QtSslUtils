@@ -50,7 +50,7 @@ class Q_SSLUTILS_EXPORT QSslUtils
 public:
 	static QSslEvpKey generateRSAKey(uint32_t bits);
 	static QSslX509Req createCSR(const QSslEvpKey &publicKey, const char *country, const char *province, const char *city, const char *org, const char *common);
-	static QSslX509 signCSR(const QSslX509 &ca, const QSslEvpKey &caKey, const QSslX509Req &req, uint32_t serial, uint32_t days);
+	static QSslX509 signCSR(const QSslX509 &ca, const QSslEvpKey &caKey, const QSslX509Req &req, uint32_t serial, int32_t daysStart, int32_t daysEnd);
 	static QSslX509 createCA(const QSslEvpKey &caKey, const char *country, const char *province, const char *city, const char *org, const char *common, uint32_t serial, uint32_t days);
 	static QByteArray publicKeyToPEM(const QSslEvpKey &key);
 	static QByteArray RSAKeyToPEM(const QSslEvpKey &key);

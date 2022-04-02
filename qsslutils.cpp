@@ -103,7 +103,7 @@ QSslX509Req QSslUtils::createCSR(const QSslEvpKey &publicKey, const char *countr
 	return x509Req;
 }
 
-QSslX509 QSslUtils::signCSR(const QSslX509 &ca, const QSslEvpKey &caKey, const QSslX509Req &req, uint32_t serial, uint32_t days)
+QSslX509 QSslUtils::signCSR(const QSslX509 &ca, const QSslEvpKey &caKey, const QSslX509Req &req, uint32_t serial, int32_t daysStart, int32_t daysEnd)
 {
 	QSslX509 newCert(X509_new(), [](X509 *cert) { X509_free(cert); });
 
@@ -126,8 +126,8 @@ QSslX509 QSslUtils::signCSR(const QSslX509 &ca, const QSslEvpKey &caKey, const Q
 		return newCert;
 	}
 
-	X509_gmtime_adj(X509_get_notBefore(newCert.data()), 0);
-	X509_gmtime_adj(X509_get_notAfter(newCert.data()), (long)3600 * 24 * days);
+	X509_gmtime_adj(X509_get_notBefore(newCert.data()), (long)3600 * 24 * daysStart);
+	X509_gmtime_adj(X509_get_notAfter(newCert.data()), (long)3600 * 24 * daysEnd);
 
 	if (!X509_set_subject_name(newCert.data(), X509_REQ_get_subject_name(req.data()))) {
 		newCert.clear();
