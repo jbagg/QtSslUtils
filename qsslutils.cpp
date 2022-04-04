@@ -299,3 +299,36 @@ QSslX509 QSslUtils::pemToCertificate(const QByteArray &pemCert)
 	std::unique_ptr<BIO, std::function<void (BIO *)>> certBIO(BIO_new_mem_buf(pemCert.data(), -1), [](BIO *bio) { BIO_free_all(bio); });
 	return QSslX509(PEM_read_bio_X509(certBIO.get(), nullptr, nullptr, nullptr), [](X509 *cert) { X509_free(cert); });
 }
+
+QSslX509 QSslUtils::derToCertificate(const QByteArray &derCert)
+{
+	const unsigned char *data;
+	data = (unsigned char *) derCert.data();
+	return QSslX509(d2i_X509(nullptr, &data, derCert.size()), [](X509 *cert) { X509_free(cert); });
+}
+
+QByteArray QSslUtils::certificateToDer(const QSslX509 &cert)
+{
+	unsigned char *data = nullptr;
+	ssize_t size = i2d_X509(cert.data(), &data);
+	qDebug() << "size" << size;
+	QByteArray certByteArray((char *)data, size);
+	free(data);
+	return certByteArray;
+}
+
+QByteArray QSslUtils::CSRToPEM(const QSslX509Req &req)
+{
+	QByteArray csrByteArray;
+	std::unique_ptr<BIO, std::function<void (BIO *)>> certBIO(BIO_new(BIO_s_mem()), [](BIO *bio) { BIO_free_all(bio); });
+	PEM_write_bio_X509_REQ(certBIO.get(), req.data());
+	csrByteArray.resize(BIO_pending(certBIO.get()) + 1);
+	BIO_read(certBIO.get(), csrByteArray.data(), csrByteArray.size() - 1);
+	return csrByteArray;
+}
+
+QSslX509Req QSslUtils::pemToCSR(const QByteArray &pemCSR)
+{
+	std::unique_ptr<BIO, std::function<void (BIO *)>> certBIO(BIO_new_mem_buf(pemCSR.data(), -1), [](BIO *bio) { BIO_free_all(bio); });
+	return QSslX509Req(PEM_read_bio_X509_REQ(certBIO.get(), nullptr, nullptr, nullptr), [](X509_REQ *csr) { X509_REQ_free(csr); });
+}
