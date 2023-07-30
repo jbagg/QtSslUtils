@@ -258,7 +258,11 @@ QByteArray QSslUtils::publicKeyToPEM(const QSslEvpKey &key)
 QByteArray QSslUtils::RSAKeyToPEM(const QSslEvpKey &key)
 {
 	QByteArray keyByteArray;
+#if (OPENSSL_VERSION_MAJOR >= 3)  // Debian 12 is using openssl 3 and RSA appears to be declaired differently
+	const RSA *rsa = EVP_PKEY_get0_RSA(key.data());
+#else
 	RSA *rsa = EVP_PKEY_get0_RSA(key.data());
+#endif
 	std::unique_ptr<BIO, std::function<void (BIO *)>> keyBIO(BIO_new(BIO_s_mem()), [](BIO *bio) { BIO_free_all(bio); });
 	PEM_write_bio_RSAPrivateKey(keyBIO.get(), rsa, nullptr, nullptr, RSA_size(rsa), nullptr, nullptr);
 	keyByteArray.resize(BIO_pending(keyBIO.get()) + 1);
