@@ -30,9 +30,13 @@
 
 QSslEvpKey QSslUtils::generateRSAKey(uint32_t bits)
 {
-	RSA *rsa = nullptr;
 	QSslEvpKey publicKey;
-
+#if (OPENSSL_VERSION_MAJOR >= 3)
+	OSSL_LIB_CTX *sslLibContext = nullptr;
+	publicKey = QSslEvpKey(EVP_PKEY_Q_keygen(sslLibContext, nullptr, "RSA", bits), [](EVP_PKEY *x) { EVP_PKEY_free(x); });
+	OSSL_LIB_CTX_free(sslLibContext);
+#else
+	RSA *rsa = nullptr;
 	std::unique_ptr<BIGNUM, std::function<void (BIGNUM *)>> bne(BN_new(), [](BIGNUM *b) { BN_free(b); });
 	if (BN_set_word(bne.get(), RSA_F4) != 1) {
 		return publicKey;
@@ -48,7 +52,7 @@ QSslEvpKey QSslUtils::generateRSAKey(uint32_t bits)
 	if (!publicKey)
 		return publicKey;
 	EVP_PKEY_assign_RSA(publicKey.data(), rsa);
-
+#endif
 	return publicKey;
 }
 
