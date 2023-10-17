@@ -25,6 +25,10 @@
 ---------------------------------------------------------------------------------------------------
 **************************************************************************************************/
 #include <openssl/x509v3.h>
+#if (OPENSSL_VERSION_MAJOR >= 3)
+#include <openssl/decoder.h>
+#include <openssl/encoder.h>
+#endif
 #include <QDebug>
 #include "qsslutils.h"
 
@@ -262,23 +266,39 @@ QByteArray QSslUtils::publicKeyToPEM(const QSslEvpKey &key)
 QByteArray QSslUtils::RSAKeyToPEM(const QSslEvpKey &key)
 {
 	QByteArray keyByteArray;
-#if (OPENSSL_VERSION_MAJOR >= 3)  // Debian 12 is using openssl 3 and RSA appears to be declaired differently
-	const RSA *rsa = EVP_PKEY_get0_RSA(key.data());
+
+#if (OPENSSL_VERSION_MAJOR >= 3)
+	OSSL_ENCODER_CTX *enc;
+	std::unique_ptr<BIO, std::function<void (BIO *)>> keyBIO(BIO_new(BIO_s_mem()), [](BIO *bio) { BIO_free_all(bio); });
+	enc = OSSL_ENCODER_CTX_new_for_pkey(key.data(), OSSL_KEYMGMT_SELECT_KEYPAIR | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS, "PEM", "PrivateKeyInfo", nullptr);
+	if (OSSL_ENCODER_to_bio(enc, keyBIO.get())) {
+		keyByteArray.resize(BIO_pending(keyBIO.get()) + 1);
+		BIO_read(keyBIO.get(), keyByteArray.data(), keyByteArray.size() - 1);
+	}
+	OSSL_ENCODER_CTX_free(enc);
 #else
 	RSA *rsa = EVP_PKEY_get0_RSA(key.data());
-#endif
 	std::unique_ptr<BIO, std::function<void (BIO *)>> keyBIO(BIO_new(BIO_s_mem()), [](BIO *bio) { BIO_free_all(bio); });
 	PEM_write_bio_RSAPrivateKey(keyBIO.get(), rsa, nullptr, nullptr, RSA_size(rsa), nullptr, nullptr);
 	keyByteArray.resize(BIO_pending(keyBIO.get()) + 1);
 	BIO_read(keyBIO.get(), keyByteArray.data(), keyByteArray.size() - 1);
+#endif
 	return keyByteArray;
 }
 
 QSslEvpKey QSslUtils::pemToRSAKey(const QByteArray &pemKey)
 {
 	QSslEvpKey key;
-	RSA *rsa;
 
+#if (OPENSSL_VERSION_MAJOR >= 3)
+	EVP_PKEY *evpPkey = nullptr;
+	std::unique_ptr<BIO, std::function<void (BIO *)>> keyBIO(BIO_new_mem_buf(pemKey.data(), -1), [](BIO *bio) { BIO_free_all(bio); });
+	OSSL_DECODER_CTX *dec = OSSL_DECODER_CTX_new_for_pkey(&evpPkey, "PEM", nullptr, "RSA", OSSL_KEYMGMT_SELECT_KEYPAIR, nullptr, nullptr);
+	if (OSSL_DECODER_from_bio(dec, keyBIO.get()))
+		key = QSslEvpKey(evpPkey, [](EVP_PKEY *x) { EVP_PKEY_free(x); });
+	OSSL_DECODER_CTX_free(dec);
+#else
+	RSA *rsa;
 	std::unique_ptr<BIO, std::function<void (BIO *)>> certBIO(BIO_new_mem_buf(pemKey.data(), -1), [](BIO *bio) { BIO_free_all(bio); });
 	rsa = PEM_read_bio_RSAPrivateKey(certBIO.get(), nullptr, nullptr, nullptr);
 	if (!rsa)
@@ -288,7 +308,7 @@ QSslEvpKey QSslUtils::pemToRSAKey(const QByteArray &pemKey)
 	if (!key)
 		return key;
 	EVP_PKEY_assign_RSA(key.data(), rsa);
-
+#endif
 	return key;
 }
 
