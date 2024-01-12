@@ -25,6 +25,7 @@
 ---------------------------------------------------------------------------------------------------
 **************************************************************************************************/
 #include <openssl/x509v3.h>
+#include <openssl/bn.h>
 #if (OPENSSL_VERSION_MAJOR >= 3)
 #include <openssl/decoder.h>
 #include <openssl/encoder.h>
@@ -134,8 +135,8 @@ QSslX509 QSslUtils::signCSR(const QSslX509 &ca, const QSslEvpKey &caKey, const Q
 		return newCert;
 	}
 
-	X509_gmtime_adj(X509_get_notBefore(newCert.data()), (long)3600 * 24 * daysStart);
-	X509_gmtime_adj(X509_get_notAfter(newCert.data()), (long)3600 * 24 * daysEnd);
+	X509_gmtime_adj(X509_getm_notBefore(newCert.data()), (long)3600 * 24 * daysStart);
+	X509_gmtime_adj(X509_getm_notAfter(newCert.data()), (long)3600 * 24 * daysEnd);
 
 	if (!X509_set_subject_name(newCert.data(), X509_REQ_get_subject_name(req.data()))) {
 		newCert.clear();
@@ -175,11 +176,11 @@ QSslX509 QSslUtils::createCA(const QSslEvpKey &pk, const char *country, const ch
 		ca.clear();
 		return ca;
 	}
-	if (!X509_gmtime_adj(X509_get_notBefore(ca.data()), 0)) {
+	if (!X509_gmtime_adj(X509_getm_notBefore(ca.data()), 0)) {
 		ca.clear();
 		return ca;
 	}
-	if (!X509_gmtime_adj(X509_get_notAfter(ca.data()), (long)3600 * 24 * days)) {
+	if (!X509_gmtime_adj(X509_getm_notAfter(ca.data()), (long)3600 * 24 * days)) {
 		ca.clear();
 		return ca;
 	}
