@@ -358,7 +358,6 @@ QByteArray QSslUtils::certificateToDer(const QSslX509 &cert)
 {
 	unsigned char *data = nullptr;
 	ssize_t size = i2d_X509(cert.data(), &data);
-	qDebug() << "size" << size;
 	QByteArray certByteArray(reinterpret_cast<char *>(data), size);
 	free(data);
 	return certByteArray;
@@ -402,7 +401,6 @@ bool QSslUtils::verifySignature(const EVP_MD *evp, const QByteArray &data, QByte
 	EVP_MD_CTX* evpMdContext = EVP_MD_CTX_create();
 	bool matches = false;
 
-	//EVP_DigestVerifyInit(evpMdContext, nullptr, EVP_sha256(), nullptr, publicKey.data());
 	EVP_DigestVerifyInit(evpMdContext, nullptr, evp, nullptr, publicKey.data());
 	EVP_DigestVerifyUpdate(evpMdContext, data.data(), data.length());
 	if (EVP_DigestVerifyFinal(evpMdContext, reinterpret_cast<unsigned char *>(dataSignature.data()), static_cast<size_t>(dataSignature.length())) == 1)
