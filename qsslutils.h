@@ -55,12 +55,15 @@ public:
 	static QByteArray publicKeyToPEM(const QSslEvpKey &key);
 	static QByteArray RSAKeyToPEM(const QSslEvpKey &key);
 	static QSslEvpKey pemToRSAKey(const QByteArray &pemKey);
+	static QSslEvpKey pemToPublicKey(const QByteArray &pemKey);
 	static QByteArray certificateToPEM(const QSslX509 &cert);
 	static QSslX509 pemToCertificate(const QByteArray &pemCert);
 	static QSslX509 derToCertificate(const QByteArray &derCert);
 	static QByteArray certificateToDer(const QSslX509 &cert);
 	static QByteArray CSRToPEM(const QSslX509Req &req);
 	static QSslX509Req pemToCSR(const QByteArray &pemCSR);
+private:
+	static QSslEvpKey pemToKey(const QByteArray &pemKey, bool selectPair);
 };
 
 

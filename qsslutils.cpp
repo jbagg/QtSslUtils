@@ -287,21 +287,29 @@ QByteArray QSslUtils::RSAKeyToPEM(const QSslEvpKey &key)
 	return keyByteArray;
 }
 
-QSslEvpKey QSslUtils::pemToRSAKey(const QByteArray &pemKey)
+QSslEvpKey QSslUtils::pemToKey(const QByteArray &pemKey, bool selectPair)
 {
 	QSslEvpKey key;
 
 #if (OPENSSL_VERSION_MAJOR >= 3)
 	EVP_PKEY *evpPkey = nullptr;
+	int keyTypeFlags = 0;
+	if (selectPair)
+		keyTypeFlags = OSSL_KEYMGMT_SELECT_KEYPAIR;
+	else
+		keyTypeFlags = OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
 	std::unique_ptr<BIO, std::function<void (BIO *)>> keyBIO(BIO_new_mem_buf(pemKey.data(), -1), [](BIO *bio) { BIO_free_all(bio); });
-	OSSL_DECODER_CTX *dec = OSSL_DECODER_CTX_new_for_pkey(&evpPkey, "PEM", nullptr, "RSA", OSSL_KEYMGMT_SELECT_KEYPAIR, nullptr, nullptr);
+	OSSL_DECODER_CTX *dec = OSSL_DECODER_CTX_new_for_pkey(&evpPkey, "PEM", nullptr, "RSA", keyTypeFlags, nullptr, nullptr);
 	if (OSSL_DECODER_from_bio(dec, keyBIO.get()))
 		key = QSslEvpKey(evpPkey, [](EVP_PKEY *x) { EVP_PKEY_free(x); });
 	OSSL_DECODER_CTX_free(dec);
 #else
 	RSA *rsa;
 	std::unique_ptr<BIO, std::function<void (BIO *)>> certBIO(BIO_new_mem_buf(pemKey.data(), -1), [](BIO *bio) { BIO_free_all(bio); });
-	rsa = PEM_read_bio_RSAPrivateKey(certBIO.get(), nullptr, nullptr, nullptr);
+	if (selectPair)
+		rsa = PEM_read_bio_RSAPrivateKey(certBIO.get(), nullptr, nullptr, nullptr);
+	else
+		rsa = PEM_read_bio_RSAPublicKey(certBIO.get(), nullptr, nullptr, nullptr);
 	if (!rsa)
 		return key;
 
@@ -311,6 +319,16 @@ QSslEvpKey QSslUtils::pemToRSAKey(const QByteArray &pemKey)
 	EVP_PKEY_assign_RSA(key.data(), rsa);
 #endif
 	return key;
+}
+
+QSslEvpKey QSslUtils::pemToRSAKey(const QByteArray &pemKey)
+{
+	return pemToKey(pemKey, true);
+}
+
+QSslEvpKey QSslUtils::pemToPublicKey(const QByteArray &pemKey)
+{
+	return pemToKey(pemKey, false);
 }
 
 QByteArray QSslUtils::certificateToPEM(const QSslX509 &cert)
