@@ -350,7 +350,7 @@ QSslX509 QSslUtils::pemToCertificate(const QByteArray &pemCert)
 QSslX509 QSslUtils::derToCertificate(const QByteArray &derCert)
 {
 	const unsigned char *data;
-	data = (unsigned char *) derCert.data();
+	data = reinterpret_cast<const unsigned char *>(derCert.data());
 	return QSslX509(d2i_X509(nullptr, &data, derCert.size()), [](X509 *cert) { X509_free(cert); });
 }
 
@@ -359,7 +359,7 @@ QByteArray QSslUtils::certificateToDer(const QSslX509 &cert)
 	unsigned char *data = nullptr;
 	ssize_t size = i2d_X509(cert.data(), &data);
 	qDebug() << "size" << size;
-	QByteArray certByteArray((char *)data, size);
+	QByteArray certByteArray(reinterpret_cast<char *>(data), size);
 	free(data);
 	return certByteArray;
 }
@@ -390,7 +390,7 @@ QByteArray QSslUtils::hashAndSign(const EVP_MD *evp, const QByteArray &data, con
 	EVP_DigestSignUpdate(evpMdContext, data.data(), data.length());
 	EVP_DigestSignFinal(evpMdContext, nullptr, &signatureLength);
 	signature.resize(signatureLength);
-	EVP_DigestSignFinal(evpMdContext, (unsigned char*)signature.data(), &signatureLength);
+	EVP_DigestSignFinal(evpMdContext, reinterpret_cast<unsigned char *>(signature.data()), &signatureLength);
 
 	EVP_MD_CTX_destroy(evpMdContext);
 
