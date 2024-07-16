@@ -65,41 +65,53 @@ public:
 
 	// Sha1
 	static QByteArray hashAndSignSha1(const QByteArray &data, const QSslEvpKey &privateKey);
+	static QByteArray signExistingSha1(QByteArray &hash, const QSslEvpKey &privateKey);
 	static bool verifySignatureSha1(const QByteArray &data, QByteArray &dataSignature, const QSslEvpKey &publicKey);
 	// Sha224
 	static QByteArray hashAndSignSha224(const QByteArray &data, const QSslEvpKey &privateKey);
+	static QByteArray signExistingSha224(QByteArray &hash, const QSslEvpKey &privateKey);
 	static bool verifySignatureSha224(const QByteArray &data, QByteArray &dataSignature, const QSslEvpKey &publicKey);
 	// Sha256
 	static QByteArray hashAndSignSha256(const QByteArray &data, const QSslEvpKey &privateKey);
+	static QByteArray signExistingSha256(QByteArray &hash, const QSslEvpKey &privateKey);
 	static bool verifySignatureSha256(const QByteArray &data, QByteArray &dataSignature, const QSslEvpKey &publicKey);
 	// Sha384
 	static QByteArray hashAndSignSha384(const QByteArray &data, const QSslEvpKey &privateKey);
+	static QByteArray signExistingSha384(QByteArray &hash, const QSslEvpKey &privateKey);
 	static bool verifySignatureSha384(const QByteArray &data, QByteArray &dataSignature, const QSslEvpKey &publicKey);
 	// Sha512
 	static QByteArray hashAndSignSha512(const QByteArray &data, const QSslEvpKey &privateKey);
+	static QByteArray signExistingSha512(QByteArray &hash, const QSslEvpKey &privateKey);
 	static bool verifySignatureSha512(const QByteArray &data, QByteArray &dataSignature, const QSslEvpKey &publicKey);
 	// Sha3-224
 	static QByteArray hashAndSign3Sha224(const QByteArray &data, const QSslEvpKey &privateKey);
+	static QByteArray signExisting3Sha224(QByteArray &hash, const QSslEvpKey &privateKey);
 	static bool verifySignature3Sha224(const QByteArray &data, QByteArray &dataSignature, const QSslEvpKey &publicKey);
 	// Sha3-256
 	static QByteArray hashAndSign3Sha256(const QByteArray &data, const QSslEvpKey &privateKey);
+	static QByteArray signExisting3Sha256(QByteArray &hash, const QSslEvpKey &privateKey);
 	static bool verifySignature3Sha256(const QByteArray &data, QByteArray &dataSignature, const QSslEvpKey &publicKey);
 	// Sha3-384
 	static QByteArray hashAndSign3Sha384(const QByteArray &data, const QSslEvpKey &privateKey);
+	static QByteArray signExisting3Sha384(QByteArray &hash, const QSslEvpKey &privateKey);
 	static bool verifySignature3Sha384(const QByteArray &data, QByteArray &dataSignature, const QSslEvpKey &publicKey);
 	// Sha3-512
 	static QByteArray hashAndSign3Sha512(const QByteArray &data, const QSslEvpKey &privateKey);
+	static QByteArray signExisting3Sha512(QByteArray &hash, const QSslEvpKey &privateKey);
 	static bool verifySignature3Sha512(const QByteArray &data, QByteArray &dataSignature, const QSslEvpKey &publicKey);
 	// Shake 128
 	static QByteArray hashAndSignShake128(const QByteArray &data, const QSslEvpKey &privateKey);
+	static QByteArray signExistingShake128(QByteArray &hash, const QSslEvpKey &privateKey);
 	static bool verifySignatureShake128(const QByteArray &data, QByteArray &dataSignature, const QSslEvpKey &publicKey);
 	// Shake 256
 	static QByteArray hashAndSignShake256(const QByteArray &data, const QSslEvpKey &privateKey);
+	static QByteArray signExistingShake256(QByteArray &hash, const QSslEvpKey &privateKey);
 	static bool verifySignatureShake256(const QByteArray &data, QByteArray &dataSignature, const QSslEvpKey &publicKey);
 
 private:
 	static QSslEvpKey pemToKey(const QByteArray &pemKey, bool selectPair);
 	static QByteArray hashAndSign(const EVP_MD *evp, const QByteArray &data, const QSslEvpKey &privateKey);
+	static QByteArray signExistingHash(const EVP_MD *evp, QByteArray &hash, const QSslEvpKey &privateKey);
 	static bool verifySignature(const EVP_MD *evp, const QByteArray &data, QByteArray &dataSignature, const QSslEvpKey &publicKey);
 };
 

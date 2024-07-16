@@ -396,6 +396,26 @@ QByteArray QSslUtils::hashAndSign(const EVP_MD *evp, const QByteArray &data, con
 	return signature;
 }
 
+QByteArray QSslUtils::signExistingHash(const EVP_MD *evp, QByteArray &hash, const QSslEvpKey &privateKey)
+{
+	QByteArray signature;
+	size_t sigOutLength;
+	size_t inSize = hash.size();
+
+#if (OPENSSL_VERSION_MAJOR >= 3)
+	EVP_PKEY_CTX *pkeyContext = EVP_PKEY_CTX_new_from_pkey(nullptr, privateKey.data(), "");
+#else
+	EVP_PKEY_CTX *pkeyContext = EVP_PKEY_CTX_new(privateKey.data(), nullptr);
+#endif
+	EVP_PKEY_sign_init(pkeyContext);
+	EVP_PKEY_CTX_set_signature_md(pkeyContext, evp);
+	EVP_PKEY_sign(pkeyContext, nullptr, &sigOutLength, reinterpret_cast<unsigned char *>(hash.data()), inSize);
+	signature.resize(sigOutLength);
+	EVP_PKEY_sign(pkeyContext, reinterpret_cast<unsigned char *>(signature.data()), &sigOutLength, reinterpret_cast<unsigned char *>(hash.data()), inSize);
+	EVP_PKEY_CTX_free(pkeyContext);
+	return signature;
+}
+
 bool QSslUtils::verifySignature(const EVP_MD *evp, const QByteArray &data, QByteArray &dataSignature, const QSslEvpKey &publicKey)
 {
 	EVP_MD_CTX* evpMdContext = EVP_MD_CTX_create();
@@ -416,6 +436,11 @@ QByteArray QSslUtils::hashAndSignSha1(const QByteArray &data, const QSslEvpKey &
 	return hashAndSign(EVP_sha1(), data, privateKey);
 }
 
+QByteArray QSslUtils::signExistingSha1(QByteArray &hash, const QSslEvpKey &privateKey)
+{
+	return signExistingHash(EVP_sha1(), hash, privateKey);
+}
+
 bool QSslUtils::verifySignatureSha1(const QByteArray &data, QByteArray &dataSignature, const QSslEvpKey &publicKey)
 {
 	return verifySignature(EVP_sha1(), data, dataSignature, publicKey);
@@ -424,6 +449,11 @@ bool QSslUtils::verifySignatureSha1(const QByteArray &data, QByteArray &dataSign
 QByteArray QSslUtils::hashAndSignSha224(const QByteArray &data, const QSslEvpKey &privateKey)
 {
 	return hashAndSign(EVP_sha224(), data, privateKey);
+}
+
+QByteArray QSslUtils::signExistingSha224(QByteArray &hash, const QSslEvpKey &privateKey)
+{
+	return signExistingHash(EVP_sha224(), hash, privateKey);
 }
 
 bool QSslUtils::verifySignatureSha224(const QByteArray &data, QByteArray &dataSignature, const QSslEvpKey &publicKey)
@@ -436,6 +466,11 @@ QByteArray QSslUtils::hashAndSignSha256(const QByteArray &data, const QSslEvpKey
 	return hashAndSign(EVP_sha256(), data, privateKey);
 }
 
+QByteArray QSslUtils::signExistingSha256(QByteArray &hash, const QSslEvpKey &privateKey)
+{
+	return signExistingHash(EVP_sha256(), hash, privateKey);
+}
+
 bool QSslUtils::verifySignatureSha256(const QByteArray &data, QByteArray &dataSignature, const QSslEvpKey &publicKey)
 {
 	return verifySignature(EVP_sha256(), data, dataSignature, publicKey);
@@ -444,6 +479,11 @@ bool QSslUtils::verifySignatureSha256(const QByteArray &data, QByteArray &dataSi
 QByteArray QSslUtils::hashAndSignSha384(const QByteArray &data, const QSslEvpKey &privateKey)
 {
 	return hashAndSign(EVP_sha384(), data, privateKey);
+}
+
+QByteArray QSslUtils::signExistingSha384(QByteArray &hash, const QSslEvpKey &privateKey)
+{
+	return signExistingHash(EVP_sha384(), hash, privateKey);
 }
 
 bool QSslUtils::verifySignatureSha384(const QByteArray &data, QByteArray &dataSignature, const QSslEvpKey &publicKey)
@@ -456,6 +496,11 @@ QByteArray QSslUtils::hashAndSignSha512(const QByteArray &data, const QSslEvpKey
 	return hashAndSign(EVP_sha512(), data, privateKey);
 }
 
+QByteArray QSslUtils::signExistingSha512(QByteArray &hash, const QSslEvpKey &privateKey)
+{
+	return signExistingHash(EVP_sha512(), hash, privateKey);
+}
+
 bool QSslUtils::verifySignatureSha512(const QByteArray &data, QByteArray &dataSignature, const QSslEvpKey &publicKey)
 {
 	return verifySignature(EVP_sha512(), data, dataSignature, publicKey);
@@ -464,6 +509,11 @@ bool QSslUtils::verifySignatureSha512(const QByteArray &data, QByteArray &dataSi
 QByteArray QSslUtils::hashAndSign3Sha224(const QByteArray &data, const QSslEvpKey &privateKey)
 {
 	return hashAndSign(EVP_sha3_224(), data, privateKey);
+}
+
+QByteArray QSslUtils::signExisting3Sha224(QByteArray &hash, const QSslEvpKey &privateKey)
+{
+	return signExistingHash(EVP_sha3_224(), hash, privateKey);
 }
 
 bool QSslUtils::verifySignature3Sha224(const QByteArray &data, QByteArray &dataSignature, const QSslEvpKey &publicKey)
@@ -476,6 +526,11 @@ QByteArray QSslUtils::hashAndSign3Sha256(const QByteArray &data, const QSslEvpKe
 	return hashAndSign(EVP_sha3_256(), data, privateKey);
 }
 
+QByteArray QSslUtils::signExisting3Sha256(QByteArray &hash, const QSslEvpKey &privateKey)
+{
+	return signExistingHash(EVP_sha3_256(), hash, privateKey);
+}
+
 bool QSslUtils::verifySignature3Sha256(const QByteArray &data, QByteArray &dataSignature, const QSslEvpKey &publicKey)
 {
 	return verifySignature(EVP_sha3_256(), data, dataSignature, publicKey);
@@ -484,6 +539,11 @@ bool QSslUtils::verifySignature3Sha256(const QByteArray &data, QByteArray &dataS
 QByteArray QSslUtils::hashAndSign3Sha384(const QByteArray &data, const QSslEvpKey &privateKey)
 {
 	return hashAndSign(EVP_sha3_384(), data, privateKey);
+}
+
+QByteArray QSslUtils::signExisting3Sha384(QByteArray &hash, const QSslEvpKey &privateKey)
+{
+	return signExistingHash(EVP_sha3_384(), hash, privateKey);
 }
 
 bool QSslUtils::verifySignature3Sha384(const QByteArray &data, QByteArray &dataSignature, const QSslEvpKey &publicKey)
@@ -496,6 +556,11 @@ QByteArray QSslUtils::hashAndSign3Sha512(const QByteArray &data, const QSslEvpKe
 	return hashAndSign(EVP_sha3_512(), data, privateKey);
 }
 
+QByteArray QSslUtils::signExisting3Sha512(QByteArray &hash, const QSslEvpKey &privateKey)
+{
+	return signExistingHash(EVP_sha3_512(), hash, privateKey);
+}
+
 bool QSslUtils::verifySignature3Sha512(const QByteArray &data, QByteArray &dataSignature, const QSslEvpKey &publicKey)
 {
 	return verifySignature(EVP_sha3_512(), data, dataSignature, publicKey);
@@ -506,6 +571,11 @@ QByteArray QSslUtils::hashAndSignShake128(const QByteArray &data, const QSslEvpK
 	return hashAndSign(EVP_shake128(), data, privateKey);
 }
 
+QByteArray QSslUtils::signExistingShake128(QByteArray &hash, const QSslEvpKey &privateKey)
+{
+	return signExistingHash(EVP_shake128(), hash, privateKey);
+}
+
 bool QSslUtils::verifySignatureShake128(const QByteArray &data, QByteArray &dataSignature, const QSslEvpKey &publicKey)
 {
 	return verifySignature(EVP_shake128(), data, dataSignature, publicKey);
@@ -514,6 +584,11 @@ bool QSslUtils::verifySignatureShake128(const QByteArray &data, QByteArray &data
 QByteArray QSslUtils::hashAndSignShake256(const QByteArray &data, const QSslEvpKey &privateKey)
 {
 	return hashAndSign(EVP_shake256(), data, privateKey);
+}
+
+QByteArray QSslUtils::signExistingShake256(QByteArray &hash, const QSslEvpKey &privateKey)
+{
+	return signExistingHash(EVP_shake256(), hash, privateKey);
 }
 
 bool QSslUtils::verifySignatureShake256(const QByteArray &data, QByteArray &dataSignature, const QSslEvpKey &publicKey)
